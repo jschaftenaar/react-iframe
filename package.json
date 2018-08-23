@@ -1,12 +1,16 @@
 {
-  "name": "react-iframe",
+  "name": "@jschaftenaar/react-iframe",
   "version": "0.0.1",
-  "description": "react iframe component with postmessage and size adjustment",
-  "main": "dist/iframe.js",
+  "description": "react iframe component with postmessage and automatic size adjustment",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "webpack --watch",
     "build": "webpack"
+  },
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/jschaftenaar/react-iframe.git"
   },
   "keywords": [
     "iframe",
