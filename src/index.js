@@ -13,8 +13,10 @@ class ReactIframe extends React.Component {
     this.ref = React.createRef();
     this.state = {
       height: this.props.height,
-      width: this.props.width
+      width: this.props.width,
+      loader: this.props.loader
     }
+    this.url = this.props.src;
   }
 
   componentWillReceiveProps(nextProps) {
@@ -29,28 +31,43 @@ class ReactIframe extends React.Component {
   }
 
   onLoad() {
-    this.postMessage('');
+    this.setState({loader:''});
+    if (this.props.onLoadMessage.procedure !== '') {
+      this.postMessage(
+        this.props.onLoadMessage.procedure,
+        ...this.props.onLoadMessage.arguments
+      );
+    }
   }  
 
   componentDidMount() {
     window.addEventListener('message', this.onPostMessage);
   }
 
+  componentWillUnmount() {
+    window.removeEventListener('message', this.onPostmessage);
+  }
+
   onPostMessage(event) {
     if (event.origin==this.origin()) {
-      const message = JSON.parse(event.data);
-      switch (message.procedure) {
-        case 'setHeight':
-          this.updateHeight(message.arguments[0]);
-        break;
-        case 'setWidth':
-          this.updateWidth(message.arguments[0]);
-        break;
-        default:
-          this.props.messageHandler(message);
+      try {
+        const message = JSON.parse(event.data);
+        switch (message.procedure) {
+          case 'setHeight':
+            this.updateHeight(message.arguments[0]);
+          break;
+          case 'setWidth':
+            this.updateWidth(message.arguments[0]);
+          break;
+          default:
+            this.props.messageHandler(message);
+        }
+      } 
+      catch (error) {
+        // silent
       }
     }
-  } 
+  }
 
   updateHeight(height) {
     if (this.props.allowUpdateHeight) {
@@ -69,7 +86,6 @@ class ReactIframe extends React.Component {
       procedure,
       arguments: args
     });
-    console.log(message);
     this.ref.current.contentWindow.postMessage(
       message,
       this.origin()
@@ -77,17 +93,27 @@ class ReactIframe extends React.Component {
   }
 
   render() {
-    const {src} = this.props;
+    const {src, frameBorder, scrolling, minHeight} = this.props;
+    const {loader, width, height} = this.state;
+    const inlineStyle = {
+      width,
+      height,
+      minHeight
+    };
+
+    if (loader!='') {
+      inlineStyle.backgroundImage = `url(${loader})`;
+      inlineStyle.backgroundRepeat = 'no-repeat';
+      inlineStyle.backgroundPosition = '50% 50%';
+    };
+
     return (
-        <iframe 
+        <iframe
           ref={this.ref}
-          style={{
-            width: this.state.width,
-            height: this.state.height
-          }}
+          style={inlineStyle}
           onLoad={this.onLoad}
-          frameBorder={this.props.frameBorder}
-          scrolling={this.props.scrolling}
+          frameBorder={frameBorder}
+          scrolling={scrolling}
           src={src}
         />
     );
@@ -101,12 +127,14 @@ ReactIframe.defaultProps = {
     procedure: null,
     arguments: null
   },
-  height: '100vh',
+  height: 'calc(100vh-55px)',
+  minHeight: 'calc(100vh - 55px)',
   width: '100%',
+  loader: '',
   messageHandler: () => {},
   onLoadMessage: {
-    procedure: null,
-    arguments: null
+    procedure: '',
+    arguments: []
   },
   frameBorder: '0',
   scrolling: 'no'
@@ -122,9 +150,11 @@ ReactIframe.propTypes = {
   allowUpdateWidth: PropTypes.bool,
   onLoadMessage: messagePropType,
   height: PropTypes.string,
+  minHeight: PropTypes.string,
   width: PropTypes.string,
   messageHandler: PropTypes.func,
   message: messagePropType,
+  loader: PropTypes.string,
   frameBorder: PropTypes.string,
   scrolling: PropTypes.string,
   src: PropTypes.string.isRequired

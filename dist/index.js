@@ -320,8 +320,10 @@ var ReactIframe = function (_React$Component) {
     _this.ref = _react2.default.createRef();
     _this.state = {
       height: _this.props.height,
-      width: _this.props.width
+      width: _this.props.width,
+      loader: _this.props.loader
     };
+    _this.url = _this.props.src;
     return _this;
   }
 
@@ -341,7 +343,10 @@ var ReactIframe = function (_React$Component) {
   }, {
     key: 'onLoad',
     value: function onLoad() {
-      this.postMessage('');
+      this.setState({ loader: '' });
+      if (this.props.onLoadMessage.procedure !== '') {
+        this.postMessage.apply(this, [this.props.onLoadMessage.procedure].concat(_toConsumableArray(this.props.onLoadMessage.arguments)));
+      }
     }
   }, {
     key: 'componentDidMount',
@@ -349,19 +354,28 @@ var ReactIframe = function (_React$Component) {
       window.addEventListener('message', this.onPostMessage);
     }
   }, {
+    key: 'componentWillUnmount',
+    value: function componentWillUnmount() {
+      window.removeEventListener('message', this.onPostmessage);
+    }
+  }, {
     key: 'onPostMessage',
     value: function onPostMessage(event) {
       if (event.origin == this.origin()) {
-        var message = JSON.parse(event.data);
-        switch (message.procedure) {
-          case 'setHeight':
-            this.updateHeight(message.arguments[0]);
-            break;
-          case 'setWidth':
-            this.updateWidth(message.arguments[0]);
-            break;
-          default:
-            this.props.messageHandler(message);
+        try {
+          var message = JSON.parse(event.data);
+          switch (message.procedure) {
+            case 'setHeight':
+              this.updateHeight(message.arguments[0]);
+              break;
+            case 'setWidth':
+              this.updateWidth(message.arguments[0]);
+              break;
+            default:
+              this.props.messageHandler(message);
+          }
+        } catch (error) {
+          // silent
         }
       }
     }
@@ -390,23 +404,39 @@ var ReactIframe = function (_React$Component) {
         procedure: procedure,
         arguments: args
       });
-      console.log(message);
       this.ref.current.contentWindow.postMessage(message, this.origin());
     }
   }, {
     key: 'render',
     value: function render() {
-      var src = this.props.src;
+      var _props = this.props,
+          src = _props.src,
+          frameBorder = _props.frameBorder,
+          scrolling = _props.scrolling,
+          minHeight = _props.minHeight;
+      var _state = this.state,
+          loader = _state.loader,
+          width = _state.width,
+          height = _state.height;
+
+      var inlineStyle = {
+        width: width,
+        height: height,
+        minHeight: minHeight
+      };
+
+      if (loader != '') {
+        inlineStyle.backgroundImage = 'url(' + loader + ')';
+        inlineStyle.backgroundRepeat = 'no-repeat';
+        inlineStyle.backgroundPosition = '50% 50%';
+      };
 
       return _react2.default.createElement('iframe', {
         ref: this.ref,
-        style: {
-          width: this.state.width,
-          height: this.state.height
-        },
+        style: inlineStyle,
         onLoad: this.onLoad,
-        frameBorder: this.props.frameBorder,
-        scrolling: this.props.scrolling,
+        frameBorder: frameBorder,
+        scrolling: scrolling,
         src: src
       });
     }
@@ -422,12 +452,14 @@ ReactIframe.defaultProps = {
     procedure: null,
     arguments: null
   },
-  height: '100vh',
+  height: 'calc(100vh-55px)',
+  minHeight: 'calc(100vh - 55px)',
   width: '100%',
+  loader: '',
   messageHandler: function messageHandler() {},
   onLoadMessage: {
-    procedure: null,
-    arguments: null
+    procedure: '',
+    arguments: []
   },
   frameBorder: '0',
   scrolling: 'no'
@@ -443,9 +475,11 @@ ReactIframe.propTypes = {
   allowUpdateWidth: _propTypes2.default.bool,
   onLoadMessage: messagePropType,
   height: _propTypes2.default.string,
+  minHeight: _propTypes2.default.string,
   width: _propTypes2.default.string,
   messageHandler: _propTypes2.default.func,
   message: messagePropType,
+  loader: _propTypes2.default.string,
   frameBorder: _propTypes2.default.string,
   scrolling: _propTypes2.default.string,
   src: _propTypes2.default.string.isRequired
