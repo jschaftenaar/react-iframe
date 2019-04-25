@@ -1,6 +1,6 @@
 {
   "name": "@jschaftenaar/react-iframe",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "react iframe component with postmessage and automatic size adjustment",
   "main": "dist/index.js",
   "scripts": {
@@ -32,9 +32,7 @@
     "babel-preset-env": "^1.7.0",
     "react": "^16.5.0",
     "react-dom": "^16.5.0",
-    "babel-runtime": "^6.26.0"
-  },
-  "dependencies": {
+    "babel-runtime": "^6.26.0",
     "react-scripts": "^1.1.5"
   }
 }
